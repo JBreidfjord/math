@@ -67,9 +67,7 @@ def extract_vectors(objects):
             raise TypeError(f"Unrecognized object: {object}")
 
 
-def draw(
-    *objects, origin=True, axes=True, grid=(1, 1), nice_aspect_ratio=True, width=6, save_as=None
-):
+def draw(*objects, axes=True, grid=(1, 1), nice_aspect_ratio=True, width=6, save_as=None):
 
     all_vectors = list(extract_vectors(objects))
     xs, ys = zip(*all_vectors)
@@ -90,9 +88,6 @@ def draw(
             ceil((max_y + y_padding) / grid[1]) * grid[1],
         )
 
-    if origin:
-        plt.scatter([0], [0], color=Color.BLACK.value, marker="x")
-
     if grid:
         plt.gca().set_xticks(np.arange(plt.xlim()[0], plt.xlim()[1], grid[0]))
         plt.gca().set_yticks(np.arange(plt.ylim()[0], plt.ylim()[1], grid[1]))
@@ -100,8 +95,8 @@ def draw(
         plt.gca().set_axisbelow(True)
 
     if axes:
-        plt.gca().axhline(linewidth=2, color=Color.BLACK.value)
-        plt.gca().axvline(linewidth=2, color=Color.BLACK.value)
+        plt.gca().axhline(linewidth=2)
+        plt.gca().axvline(linewidth=2)
 
     for object in objects:
         if isinstance(object, Polygon):
