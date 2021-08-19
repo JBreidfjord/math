@@ -155,14 +155,14 @@ def draw(*objects, axes=True, grid=(1, 1), nice_aspect_ratio=True, width=6, save
 # 3D
 class FancyArrow3D(FancyArrowPatch):
     def __init__(self, xs, ys, zs, *args, **kwargs):
-        super().__init__(self, (0, 0), (0, 0), *args, **kwargs)
+        FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
         self._verts3d = xs, ys, zs
 
     def draw(self, renderer):
         xs3d, ys3d, zs3d = self._verts3d
-        xs, ys, _ = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        xs, ys, _ = proj3d.proj_transform(xs3d, ys3d, zs3d, self.axes.M)
         self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
-        super().draw(self, renderer)
+        FancyArrowPatch.draw(self, renderer)
 
 
 @dataclass
@@ -262,9 +262,9 @@ def draw3d(
     ax.set_ylabel("y")
     ax.set_zlabel("z")
 
-    def draw_segment(start, end, linestyle="solid"):
+    def draw_segment(start, end, color=Color.BLACK, linestyle="solid"):
         xs, ys, zs = [[start[i], end[i]] for i in range(0, 3)]
-        ax.plot(xs, ys, zs, linestyle=linestyle)
+        ax.plot(xs, ys, zs, color.value, linestyle=linestyle)
 
     if axes:
         draw_segment((plot_x_range[0], 0, 0), (plot_x_range[1], 0, 0))
@@ -272,7 +272,7 @@ def draw3d(
         draw_segment((0, 0, plot_z_range[0]), (0, 0, plot_z_range[1]))
 
     if origin:
-        ax.scatter([0], [0], [0])
+        ax.scatter([0], [0], [0], color=Color.BLACK.value, marker="x")
 
     for object in objects:
         if isinstance(object, Points3D):
@@ -284,7 +284,7 @@ def draw3d(
                 draw_segment(
                     object.vertices[i],
                     object.vertices[(i + 1) % len(object.vertices)],
-                    color=object.color.value,
+                    color=object.color,
                 )
 
         elif isinstance(object, Arrow3D):
@@ -298,13 +298,13 @@ def draw3d(
             draw_segment(
                 object.start_point,
                 object.end_point,
-                color=object.color.value,
+                color=object.color,
                 linestyle=object.linestyle,
             )
 
         elif isinstance(object, Box3D):
             x, y, z = object.vector
-            kwargs = {"linestyle": "dashed", "color": "gray"}
+            kwargs = {"linestyle": "dashed", "color": Color.GRAY}
             draw_segment((0, y, 0), (x, y, 0), **kwargs)
             draw_segment((0, 0, z), (0, y, z), **kwargs)
             draw_segment((0, 0, z), (x, 0, z), **kwargs)
