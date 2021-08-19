@@ -2,19 +2,20 @@ from math import atan2, cos, pi, sin, sqrt
 
 
 def length(vector: tuple):
-    return sqrt(vector[0] ** 2 + vector[1] ** 2)
+    return sqrt(sum([c ** 2 for c in vector]))
 
 
 def add(*vectors: tuple) -> tuple:
-    return (sum([v[0] for v in vectors]), sum([v[1] for v in vectors]))
+    return tuple(map(sum, zip(*vectors)))
 
 
 def subtract(vector_a: tuple, vector_b: tuple):
-    return add(vector_a, (-vector_b[0], -vector_b[1]))
+    vector_b = tuple([-c for c in vector_b])
+    return add(vector_a, vector_b)
 
 
 def scale(vector: tuple, factor: float):
-    return (vector[0] * factor, vector[1] * factor)
+    return tuple([c * factor for c in vector])
 
 
 def translate(vector: tuple, translation: tuple):
