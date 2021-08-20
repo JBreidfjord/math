@@ -5,8 +5,13 @@ from dataclasses import dataclass
 from enum import Enum
 from math import ceil, floor, sqrt
 
+import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as np
+from mathprog.linalg import vectors
+from matplotlib.cm import get_cmap
+from matplotlib.collections import PatchCollection
+from matplotlib.colors import Colormap
 from matplotlib.patches import FancyArrowPatch, Polygon
 from matplotlib.pyplot import xlim, ylim
 from mpl_toolkits.mplot3d import proj3d
@@ -24,7 +29,7 @@ class Color(Enum):
 
 # 2D
 @dataclass
-class Polygon:
+class Polygon2D:
     vertices: list[tuple]
     color: Color = Color.BLUE
     fill: bool = False
@@ -32,20 +37,20 @@ class Polygon:
 
 
 @dataclass
-class Points:
+class Points2D:
     vectors: list[tuple]
     color: Color = Color.BLACK
 
 
 @dataclass
-class Arrow:
+class Arrow2D:
     tip: tuple
     tail: tuple = (0, 0)
     color: Color = Color.RED
 
 
 @dataclass
-class Segment:
+class Segment2D:
     start_point: tuple
     end_point: tuple
     color: Color = Color.BLUE
@@ -54,16 +59,16 @@ class Segment:
 # Helper function to extract all vectors from a list of objects
 def extract_vectors(objects):
     for object in objects:
-        if isinstance(object, Polygon):
+        if isinstance(object, Polygon2D):
             for v in object.vertices:
                 yield v
-        elif isinstance(object, Points):
+        elif isinstance(object, Points2D):
             for v in object.vectors:
                 yield v
-        elif isinstance(object, Arrow):
+        elif isinstance(object, Arrow2D):
             yield object.tip
             yield object.tail
-        elif isinstance(object, Segment):
+        elif isinstance(object, Segment2D):
             yield object.start_point
             yield object.end_point
         else:
@@ -102,20 +107,28 @@ def draw(*objects, axes=True, grid=(1, 1), nice_aspect_ratio=True, width=6, save
         plt.gca().axvline(linewidth=2)
 
     for object in objects:
-        if isinstance(object, Polygon):
-            for i in range(0, len(object.vertices)):
-                x1, y1 = object.vertices[i]
-                x2, y2 = object.vertices[(i + 1) % len(object.vertices)]
-                plt.plot([x1, x2], [y1, y2], color=object.color.value)
+        if isinstance(object, Polygon2D):
+            if object.color:
+                for i in range(0, len(object.vertices)):
+                    x1, y1 = object.vertices[i]
+                    x2, y2 = object.vertices[(i + 1) % len(object.vertices)]
+                    plt.plot([x1, x2], [y1, y2], color=object.color.value)
             if object.fill:
-                xs = [v[0] for v in object.vertices]
-                ys = [v[1] for v in object.vertices]
-                plt.gca().fill(xs, ys, object.fill, alpha=object.alpha)
-        elif isinstance(object, Points):
+                patches = []
+                poly = Polygon(object.vertices, True)
+                patches.append(poly)
+                p = PatchCollection(patches, color=object.fill)
+                plt.gca().add_collection(p)
+                if object.color is None:
+                    for i in range(0, len(object.vertices)):
+                        x1, y1 = object.vertices[i]
+                        x2, y2 = object.vertices[(i + 1) % len(object.vertices)]
+                        plt.plot([x1, x2], [y1, y2], color=object.fill, linewidth=0)
+        elif isinstance(object, Points2D):
             xs = [v[0] for v in object.vectors]
             ys = [v[1] for v in object.vectors]
             plt.scatter(xs, ys, color=object.color.value)
-        elif isinstance(object, Arrow):
+        elif isinstance(object, Arrow2D):
             tip, tail = object.tip, object.tail
             tip_length = (xlim()[1] - xlim()[0]) / 20.0
             length = sqrt((tip[1] - tail[1]) ** 2 + (tip[0] - tail[0]) ** 2)
@@ -132,7 +145,7 @@ def draw(*objects, axes=True, grid=(1, 1), nice_aspect_ratio=True, width=6, save
                 fc=object.color.value,
                 ec=object.color.value,
             )
-        elif isinstance(object, Segment):
+        elif isinstance(object, Segment2D):
             x1, y1 = object.start_point
             x2, y2 = object.end_point
             plt.plot([x1, x2], [y1, y2], color=object.color.value)
@@ -330,3 +343,43 @@ def draw3d(
         plt.savefig(save_as)
 
     plt.show()
+
+
+# 3D Shape Drawing
+def vertices(faces: list):
+    return list(set([vertex for face in faces for vertex in face]))
+
+
+def component(vector: tuple, direction: tuple):
+    return vectors.dot(vector, direction) / vectors.length(direction)
+
+
+def vector_to_2d(vector: tuple):
+    return (component(vector, (1, 0, 0)), component(vector, (0, 1, 0)))
+
+
+def face_to_2d(face: list):
+    return [vector_to_2d(vertex) for vertex in face]
+
+
+def normal(face: list):
+    return vectors.cross(vectors.subtract(face[1], face[0]), vectors.subtract(face[2], face[0]))
+
+
+def render(faces: list, color_map: Colormap = None, light: tuple = (1, 2, 3), lines: Color = None):
+    if not isinstance(color_map, Colormap):
+        color_map = get_cmap("Blues")
+
+    unit_light = vectors.unit(light)
+
+    polygons = []
+    for face in faces:
+        # Compute normal vector with length 1
+        unit_normal = vectors.unit(normal(face))
+        if unit_normal[2] > 0:
+            # Calculate shading with dot product
+            c = color_map(1 - vectors.dot(unit_normal, unit_light))
+            p = Polygon2D(face_to_2d(face), fill=c, color=lines)
+            polygons.append(p)
+
+    draw(*polygons, axes=False, grid=None)
