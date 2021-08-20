@@ -1,4 +1,4 @@
-from math import atan2, cos, pi, sin, sqrt
+from math import acos, atan2, cos, pi, sin, sqrt
 
 
 def length(vector: tuple):
@@ -40,12 +40,9 @@ def to_polar(cartesian_vector: tuple):
     return (length(cartesian_vector), atan2(y, x))
 
 
-def angle_between(vector_a: tuple, vector_b: tuple, common: tuple):
+def angle_between(vector_a: tuple, vector_b: tuple):
     """Calculate the angle between two vectors that share a common point"""
-    a = subtract(vector_a, common)
-    b = subtract(vector_b, common)
-    angle = abs(atan2(b[1], b[0]) - atan2(a[1], a[0]))
-    return angle if angle <= pi else 2 * pi - angle
+    return acos(dot(vector_a, vector_b) / (length(vector_a) * length(vector_b)))
 
 
 def rotate(vector: tuple, rotation: float):
@@ -56,3 +53,17 @@ def rotate(vector: tuple, rotation: float):
 def regular_polygon(n: int):
     """Returns vectors representing an n-sided regular polygon"""
     return [to_cartesian((1, 2 * pi / n * i)) for i in range(n)]
+
+
+def dot(vector_a: tuple, vector_b: tuple) -> float:
+    return sum([a * b for a, b in zip(vector_a, vector_b)])
+
+
+def cross(vector_a: tuple, vector_b: tuple):
+    ax, ay, az = vector_a
+    bx, by, bz = vector_b
+    return (ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx)
+
+
+def unit(vector: tuple):
+    return scale(vector, 1 / length(vector))
