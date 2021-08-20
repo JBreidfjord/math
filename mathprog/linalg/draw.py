@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from enum import Enum
 from math import ceil, floor, sqrt
 
-import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as np
 from mathprog.linalg import vectors
