@@ -1,6 +1,7 @@
 import math
 import re
 
+from mathprog.generic import fraction
 from mathprog.linalg import vectors as vec
 
 
@@ -73,6 +74,18 @@ def adjugate(matrix: tuple[tuple]):
 
 def inverse(matrix: tuple[tuple]):
     return scale(adjugate(matrix), 1 / det(matrix))
+
+
+def axb(a: tuple[tuple], b: tuple):
+    # Cramer's Rule
+    det_a = det(a)
+    x = []
+    for i in range(len(a)):
+        c = list(transpose(a))  # Transpose to convert to column form
+        c[i] = b
+        xi = det(transpose(c)) / det_a  # Tranpose c to convert to row form
+        x.append(fraction(xi))
+    return tuple(x)
 
 
 def from_string(text: str):

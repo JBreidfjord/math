@@ -1,5 +1,7 @@
 from math import acos, atan2, cos, pi, sin, sqrt
 
+from mathprog.generic import fraction
+
 
 def length(vector: tuple):
     return sqrt(sum([c ** 2 for c in vector]))
@@ -15,7 +17,7 @@ def subtract(vector_a: tuple, vector_b: tuple):
 
 
 def scale(vector: tuple, factor: float):
-    return tuple([c * factor for c in vector])
+    return tuple([fraction(c * factor) for c in vector])
 
 
 def translate(vector: tuple, translation: tuple):
